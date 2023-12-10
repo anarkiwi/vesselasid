@@ -18,10 +18,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          sudo apt-get update && sudo apt-get -y install portaudio19-dev xa65 ffmpeg
+          sudo apt-get update && sudo apt-get -y install portaudio19-dev xa65 ffmpeg && \
+            sudo pip install -r test-requirements.txt -r requirements.txt
           # https://github.com/actions/runner-images/issues/8295
           # sudo modprobe snd-dummy
-          pip3 install ./
+          pip3 install .
       - name: Run unit tests
         run: |
           pytest tests

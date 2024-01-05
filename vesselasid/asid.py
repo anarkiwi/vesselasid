@@ -47,6 +47,7 @@ ASID_UPDATE = 0x4E
 ASID_UPDATE_BOTH = 0x51
 ASID_RUN = 0x52
 ASID_LOAD = 0x53
+ASID_ADDR = 0x54
 
 VOICE_REGS = 7
 
@@ -217,6 +218,15 @@ class Asid:
                     batch[i] -= 0x80
             data.extend([msb] + batch)
         self._sysex([ASID_LOAD] + data)
+
+    def addr(self, addr):
+        lo, hi = lohi(addr, 16, 8)
+        mask = 0
+        for i, b in enumerate([lo, hi]):
+            if b & 0x80:
+                mask += 2**i
+        data = [lo & 0x7F, hi & 0x7F, mask]
+        self._sysex([ASID_ADDR] + data)
 
     def start(self):
         self._sysex([ASID_START])

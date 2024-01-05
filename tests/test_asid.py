@@ -6,6 +6,7 @@ from vesselasid.asid import (
     AsidSid,
     ASID_LOAD,
     ASID_UPDATE,
+    ASID_ADDR,
     ELEKTRON_MANID,
     lohi,
     encodebits,
@@ -105,6 +106,18 @@ class TestAsid(unittest.TestCase):
         self.asid.update({24: 255})
         self.assertEqual(
             (ELEKTRON_MANID, ASID_UPDATE, 0, 0, 0, 1, 0, 0, 0, 1, 127),
+            tuple(self.port.last_send.data),
+        )
+
+    def test_addr(self):
+        self.asid.addr(65535)
+        self.assertEqual(
+            (ELEKTRON_MANID, ASID_ADDR, 0x7F, 0x7F, 0x03),
+            tuple(self.port.last_send.data),
+        )
+        self.asid.addr(49152)
+        self.assertEqual(
+            (ELEKTRON_MANID, ASID_ADDR, 0x00, 0x40, 0x02),
             tuple(self.port.last_send.data),
         )
 

@@ -223,7 +223,7 @@ class Asid:
         lo, hi = lohi(addr, 16, 8)
         mask = 0
         for i, b in enumerate([lo, hi]):
-            if b:
+            if b & 0x80:
                 mask += 2**i
         data = [lo & 0x7F, hi & 0x7F, mask]
         self._sysex([ASID_ADDR] + data)

@@ -121,6 +121,12 @@ class TestAsid(unittest.TestCase):
             tuple(self.port.last_send.data),
         )
 
+    def test_loaddiffs(self):
+        a = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        b = [1, 2, 3, 4, 4, 4, 7, 8, 9]
+        self.asid.loaddiffs(0, a, b)
+        self.assertEqual((ELEKTRON_MANID, ASID_LOAD, 0, 4, 4), tuple(self.port.last_send.data))
+
     def test_load(self):
         self.asid.load(
             [

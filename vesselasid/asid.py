@@ -1,5 +1,6 @@
 import copy
 from collections import defaultdict
+import random
 import mido
 
 CONTROL_BITS = {
@@ -205,6 +206,39 @@ class Asid:
 
     def run(self):
         self._sysex([ASID_RUN])
+
+    def loaddiffs(self, addr, a, b, shuffle=True, overhead=9):
+        pos = None
+        strictdifflist = []
+
+        for i, x_y in enumerate(zip(a, b)):
+            x, y = x_y
+            if x == y:
+                if pos is not None:
+                    strictdifflist.append((pos, i))
+                    pos = None
+            else:
+                if pos is None:
+                    pos = i
+
+        if pos is not None:
+            strictdifflist.append((pos, i + 1))
+
+        difflist = strictdifflist[:1]
+        for diff in strictdifflist[1:]:
+            x, y = diff
+            last_x, last_y = difflist[-1]
+            if x - last_y < overhead:
+                difflist[-1] = (last_x, y)
+            else:
+                difflist.append(diff)
+
+        if shuffle:
+            random.shuffle(difflist)
+        for x, y in difflist:
+            code = b[x:y]
+            self.addr(addr + x)
+            self.load(code)
 
     def load(self, code):
         data = []

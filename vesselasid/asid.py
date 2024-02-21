@@ -49,6 +49,7 @@ ASID_UPDATE_BOTH = 0x51
 ASID_RUN = 0x52
 ASID_LOAD = 0x53
 ASID_ADDR = 0x54
+ASID_LOAD_RECT = 0x55
 
 VOICE_REGS = 7
 
@@ -240,7 +241,7 @@ class Asid:
             self.addr(addr + x)
             self.load(code)
 
-    def load(self, code):
+    def _encode_code(self, code):
         data = []
         while code:
             batch = code[:7]
@@ -251,7 +252,13 @@ class Asid:
                     msb += 2**i
                     batch[i] -= 0x80
             data.extend([msb] + batch)
-        self._sysex([ASID_LOAD] + data)
+        return data
+
+    def load(self, code):
+        self._sysex([ASID_LOAD] + self._encode_code(code))
+
+    def loadrect(self, rowstart, rowsize, code):
+        self._sysex([ASID_LOAD_RECT] + [rowstart, rowsize] + self._encode_code(code))
 
     def addr(self, addr):
         lo, hi = lohi(addr, 16, 8)

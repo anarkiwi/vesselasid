@@ -53,6 +53,8 @@ ASID_LOAD_RECT = 0x55
 ASID_ADDR_RECT = 0x56
 ASID_FILL_BUFFER = 0x57
 ASID_FILL_RECT_BUFFER = 0x58
+ASID_COPY_BUFFER = 0x59
+ASID_COPY_RECT_BUFFER = 0x5A
 
 VOICE_REGS = 7
 
@@ -275,6 +277,18 @@ class Asid:
     def fillrect(self, val, count):
         self._sysex(
             [ASID_FILL_RECT_BUFFER] + self._encode_code([val] + lohi(count, 16, 8))
+        )
+
+    def copybuff(self, copyfrom, count):
+        self._sysex(
+            [ASID_COPY_BUFFER]
+            + self._encode_code(lohi(copyfrom, 16, 8) + lohi(count, 16, 8))
+        )
+
+    def copyrect(self, copyfrom, count):
+        self._sysex(
+            [ASID_COPY_RECT_BUFFER]
+            + self._encode_code(lohi(copyfrom, 16, 8) + lohi(count, 16, 8))
         )
 
     def start(self):

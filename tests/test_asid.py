@@ -112,12 +112,12 @@ class TestAsid(unittest.TestCase):
     def test_addr(self):
         self.asid.addr(65535)
         self.assertEqual(
-            (ELEKTRON_MANID, ASID_ADDR, 0x7F, 0x7F, 0x03),
+            (ELEKTRON_MANID, ASID_ADDR, 0x03, 0x7F, 0x7F),
             tuple(self.port.last_send.data),
         )
         self.asid.addr(49152)
         self.assertEqual(
-            (ELEKTRON_MANID, ASID_ADDR, 0x00, 0x40, 0x02),
+            (ELEKTRON_MANID, ASID_ADDR, 0x02, 0x00, 0x40),
             tuple(self.port.last_send.data),
         )
 
@@ -125,7 +125,9 @@ class TestAsid(unittest.TestCase):
         a = [1, 2, 3, 4, 5, 6, 7, 8, 9]
         b = [1, 2, 3, 4, 4, 4, 7, 8, 9]
         self.asid.loaddiffs(0, a, b)
-        self.assertEqual((ELEKTRON_MANID, ASID_LOAD, 0, 4, 4), tuple(self.port.last_send.data))
+        self.assertEqual(
+            (ELEKTRON_MANID, ASID_LOAD, 0, 4, 4), tuple(self.port.last_send.data)
+        )
 
     def test_load(self):
         self.asid.load(

@@ -65,7 +65,7 @@ def lohi(x, size, losize):
     lo = x & lomask
     himask = 2**hisize - 1
     hi = (x >> losize) & himask
-    return lo, hi
+    return [lo, hi]
 
 
 def encodebits(val, bits, start=0):
@@ -260,21 +260,22 @@ class Asid:
     def load(self, code):
         self._sysex([ASID_LOAD] + self._encode_code(code))
 
-    def addrrect(self, rowstart, rowsize):
-        self._sysex([ASID_ADDR_RECT] + self._encode_code([rowstart, rowsize]))
+    def addrrect(self, rowstart, rowsize, inc):
+        self._sysex([ASID_ADDR_RECT] + self._encode_code([rowstart, rowsize, inc]))
 
     def loadrect(self, code):
         self._sysex([ASID_LOAD_RECT] + self._encode_code(code))
 
     def addr(self, addr):
-        lo, hi = lohi(addr, 16, 8)
-        self._sysex([ASID_ADDR] + self._encode_code([lo, hi]))
+        self._sysex([ASID_ADDR] + self._encode_code(lohi(addr, 16, 8)))
 
     def fillbuff(self, val, count):
-        self._sysex([ASID_FILL_BUFFER] + self._encode_code([val, count]))
+        self._sysex([ASID_FILL_BUFFER] + self._encode_code([val] + lohi(count, 16, 8)))
 
     def fillrect(self, val, count):
-        self._sysex([ASID_FILL_RECT_BUFFER] + self._encode_code([val, count]))
+        self._sysex(
+            [ASID_FILL_RECT_BUFFER] + self._encode_code([val] + lohi(count, 16, 8))
+        )
 
     def start(self):
         self._sysex([ASID_START])

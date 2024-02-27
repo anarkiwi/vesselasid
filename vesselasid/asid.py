@@ -51,6 +51,8 @@ ASID_LOAD = 0x53
 ASID_ADDR = 0x54
 ASID_LOAD_RECT = 0x55
 ASID_ADDR_RECT = 0x56
+ASID_FILL_BUFFER = 0x57
+ASID_FILL_RECT_BUFFER = 0x58
 
 VOICE_REGS = 7
 
@@ -267,6 +269,12 @@ class Asid:
     def addr(self, addr):
         lo, hi = lohi(addr, 16, 8)
         self._sysex([ASID_ADDR] + self._encode_code([lo, hi]))
+
+    def fillbuff(self, val, count):
+        self._sysex([ASID_FILL_BUFFER] + self._encode_code([val, count]))
+
+    def fillrect(self, val, count):
+        self._sysex([ASID_FILL_RECT_BUFFER] + self._encode_code([val, count]))
 
     def start(self):
         self._sysex([ASID_START])

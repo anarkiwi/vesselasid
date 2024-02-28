@@ -55,6 +55,8 @@ ASID_FILL_BUFFER = 0x57
 ASID_FILL_RECT_BUFFER = 0x58
 ASID_COPY_BUFFER = 0x59
 ASID_COPY_RECT_BUFFER = 0x5A
+ASID_STASH_REU_BUFFER = 0x5B
+ASID_FETCH_REU_BUFFER = 0x5C
 
 VOICE_REGS = 7
 
@@ -279,17 +281,26 @@ class Asid:
             [ASID_FILL_RECT_BUFFER] + self._encode_code([val] + lohi(count, 16, 8))
         )
 
+    def _encodecopy(self, copyfrom, count):
+        return self._encode_code(lohi(copyfrom, 16, 8) + lohi(count, 16, 8))
+
     def copybuff(self, copyfrom, count):
-        self._sysex(
-            [ASID_COPY_BUFFER]
-            + self._encode_code(lohi(copyfrom, 16, 8) + lohi(count, 16, 8))
-        )
+        self._sysex([ASID_COPY_BUFFER] + self.encodecopy(copyfrom, count))
 
     def copyrect(self, copyfrom, count):
-        self._sysex(
-            [ASID_COPY_RECT_BUFFER]
-            + self._encode_code(lohi(copyfrom, 16, 8) + lohi(count, 16, 8))
+        self._sysex([ASID_COPY_RECT_BUFFER] + self.encodecopy(copyfrom, count))
+
+    def _encodereu(self, reuaddr, count):
+        return self._encode_code(
+            list(int(reuaddr).to_bytes(length=3, byteorder="little", signed=False))
+            + lohi(count, 16, 8)
         )
+
+    def stashbuff(self, reuaddr, count):
+        self._sysex([ASID_STASH_REU_BUFFER] + self._encodereu(reuaddr, count))
+
+    def fetchbuff(self, reuaddr, count):
+        self._sysex([ASID_FETCH_REU_BUFFER] + self._encodereu(reuaddr, count))
 
     def start(self):
         self._sysex([ASID_START])

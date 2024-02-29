@@ -72,7 +72,7 @@ Accepts a list of integers as ```code```, and writes them to the location beginn
 
 #### loaddiffs(self, addr, a, b, shuffle=True, overhead=9)
 
-Minimize load operation by sending only diffs().  Accepts two lists of equal size of integers, ```a``` and ```b```,
+Minimize load operation by sending only diffs.  Accepts two lists of equal size of integers, ```a``` and ```b```,
 relative to the location beginning at ```addr```. Sends load() commands to cause memory to be updated to ```b``` 
 assuming original state ```a```. If ```shuffle``` is True, then the order that the diffs are sent is randomized. 
 ```overhead``` is the maxmium number of bytes between adjacent diffs to send a new diff.

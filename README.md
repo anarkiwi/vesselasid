@@ -6,13 +6,13 @@ It contains extensions that allow sending arbitrary data such as machine code ov
 
 # installation
 
-## linux
+### linux
 
 ```
 pip3 install vesselasid
 ```
 
-## macosx
+### macosx
 
 1. Install [MacPorts](https://www.macports.org/install.php).
 2. Install portmidi and dependencies: ```sudo port install python310 py310-pip py310-mido portmidi```
@@ -29,7 +29,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 ['IAC Driver Bus 1']
 ````
 
-# programming registers
+## programming SID registers
 
 ```
 MIDI_DEV = "Scarlett 2i4 USB:Scarlett 2i4 USB MIDI 1 16:0"
@@ -41,7 +41,7 @@ asid.sid.set_state(vol=15)
 asid.update() # sends all pending changes
 ```
 
-# sending and running machine code
+## sending and running machine code
 
 ```
 MIDI_DEV = "Scarlett 2i4 USB:Scarlett 2i4 USB MIDI 1 16:0"
@@ -53,3 +53,75 @@ code = xa(["lda #$0f", "sta $d418"]) # Asid adds rts automatically. Code origin 
 asid.load(code)
 asid.run() # does jsr $c000 remotely, sends clock when done.
 ```
+
+# buffer API
+
+VesselASID supports remote memory operations on the C64 side, implemented by the VAP client.
+
+All operations are related to the position of the VAP pointer, which is a 16 bit address pointer to the C64's memory.
+In general, all operations do not modify the pointer (for example, repeated calls to load() will always begin at the
+same position).
+
+#### addr(addr)
+
+Sets the VAP pointer to the value of ```addr```.
+
+#### load(code)
+
+Accepts a list of integers as ```code```, and writes them to the location beginning at the VAP pointer.
+
+#### loaddiffs(self, addr, a, b, shuffle=True, overhead=9)
+
+Minimize load operation by sending only diffs().  Accepts two lists of equal size of integers, ```a``` and ```b```,
+relative to the location beginning at ```addr```. Sends load() commands to cause memory to be updated to ```b``` 
+assuming original state ```a```. If ```shuffle``` is True, then the order that the diffs are sent is randomized. 
+```overhead``` is the maxmium number of bytes between adjacent diffs to send a new diff.
+
+#### fillbuff(val, count)
+
+Writes ```val```, ```count``` times beginning at the VAP pointer.
+
+#### copybuff(copyfrom, coumt)
+
+Copies ```count``` bytes from ```copyfrom``` (a 16 bit address) to the location beginning at the VAP pointer.
+
+#### run()
+
+Causes the C64 to ```JSR``` to a program beginning at the VAP pointer (the program must ```RTS``` to return control).
+
+#### addrrect(rowstart, rowsize, inc)
+
+Define a rectangular region in memory, for subsequent rect calls. The rectangle's top left position is always
+the current position of the VAP pointer. ```rowstart``` is the number of positions to skip to move to a new row (generally
+40 for screen memory). ```rowsize``` is the size of each row in the rectangle. ```inc``` is the number of rows to
+increment (for example 2, causes every other row to be skipped).
+
+#### loadrect(code)
+
+Accepts a list of integers as ```code```, and writes them to the location beginning at the VAP pointer, as a rectangle.
+For example, if writing to the first location in screen memory, and addrrect(40, 4, 1) was previously called, calling
+loadrect([32] * 16) would cause a 4 x 4 rectangle of spaces to be written.
+
+#### fillrect(val, code)
+
+Writes ```val```, ```count``` times beginning at the VAP pointer, as a rectangle. For example, if writing to the first
+location in screen memory, and addrrect(40, 4, 1) was previously called, calling fillrect(32, 16) would cause a 
+4 x 4 rectangle of spaces to be written.
+
+#### copyrect(copyfrom, count)
+
+Copies ```count``` bytes from ```copyfrom``` (a 16 bit address) to the location beginning at the VAP pointer,
+as a rectangle.
+
+#### stashbuff(reuaddr, count)
+
+Stores ```count``` bytes from the location beginning at the VAP pointer to the address specified by ```reuaddr``` (a 24 bit address) in the REU.
+
+#### fetchbuff(reuaddr, count)
+
+Retrieves ```count``` bytes to the location beginning at the VAP pointer from the address specified by ```reuaddr``` (a 24 bit address) in the REU.
+
+
+
+
+

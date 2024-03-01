@@ -2,7 +2,7 @@ import logging
 from vesselasid.baserender import VesselAsidRenderer
 
 
-class ExamplerAsidRenderer(VesselAsidRenderer):
+class ExampleAsidRenderer(VesselAsidRenderer):
     def __init__(self, asid):
         self.asid = asid
 

@@ -2,6 +2,7 @@ from argparse import ArgumentParser, BooleanOptionalAction
 import importlib
 import inspect
 import logging
+import time
 import mido
 from vesselasid.asid import Asid
 from vesselasid.baserender import VesselAsidRenderer
@@ -11,8 +12,10 @@ def main():
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(message)s")
     if not mido.get_output_names():
         logging.fatal("no output ports available")
+        raise ValueError
     if not mido.get_input_names():
         logging.fatal("no input ports avaialable")
+        raise ValueError
 
     parser = ArgumentParser()
     parser.add_argument(
@@ -70,9 +73,11 @@ def main():
 
     if not renderers_map:
         logging.fatal("no renderers found")
+        raise ValueError
 
-    if not options.default_renderer in renderers_map:
-        logging.fatal("default renderer not in renders")
+    if options.default_renderer not in renderers_map:
+        logging.fatal("default renderer %u not in renders", options.default_renderer)
+        raise ValueError
 
     asid_port = options.asid_port
     if not asid_port:
@@ -110,8 +115,10 @@ def main():
                             msg.program,
                         )
                 elif hasattr(renderer, msg.type):
+                    start_time = time.time()
                     func = getattr(renderer, msg.type)
                     func(msg)
+                    logging.debug("%s: %.3fs", msg, time.time() - start_time)
                 else:
                     logging.info("no handler for %s, no action", msg)
         except KeyboardInterrupt:

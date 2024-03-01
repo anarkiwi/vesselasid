@@ -13,13 +13,13 @@ class VesselAsidRenderer:
         return
 
     def note_on(self, msg):
-        logging.debug(msg)
+        return
 
     def note_off(self, msg):
-        logging.debug(msg)
+        return
 
     def control_change(self, msg):
-        logging.debug(msg)
+        return
 
     def pitchwheel(self, msg):
-        logging.debug(msg)
+        return

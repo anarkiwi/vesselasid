@@ -2,6 +2,7 @@ from argparse import ArgumentParser, BooleanOptionalAction
 import importlib
 import inspect
 import logging
+import time
 import mido
 from vesselasid.asid import Asid
 from vesselasid.baserender import VesselAsidRenderer
@@ -11,8 +12,10 @@ def main():
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(message)s")
     if not mido.get_output_names():
         logging.fatal("no output ports available")
+        raise ValueError
     if not mido.get_input_names():
         logging.fatal("no input ports avaialable")
+        raise ValueError
 
     parser = ArgumentParser()
     parser.add_argument(
@@ -45,6 +48,13 @@ def main():
         default=None,
         help="path name to file containing renderer classes",
     )
+    parser.add_argument(
+        "--default-renderer",
+        dest="default_renderer",
+        type=int,
+        default=0,
+        help="If set, default renderer",
+    )
     options = parser.parse_args()
 
     renderers = []
@@ -57,12 +67,17 @@ def main():
                     logging.info("found %s", cls_name)
                     renderers.append((cls_name, cls))
     renderers_map = {}
-    for i, j in enumerate(renderers):
+    for i, j in enumerate(sorted(renderers)):
         logging.info("program %u is %s", i, j[0])
         renderers_map[i] = j
 
     if not renderers_map:
         logging.fatal("no renderers found")
+        raise ValueError
+
+    if options.default_renderer not in renderers_map:
+        logging.fatal("default renderer %u not in renders", options.default_renderer)
+        raise ValueError
 
     asid_port = options.asid_port
     if not asid_port:
@@ -79,30 +94,35 @@ def main():
         asid_in_port = mido.open_input(asid_port)
 
     asid = Asid(asid_out_port, in_port=asid_in_port)
-    with mido.open_input(ctrl_port) as ctrl_in_port:
-        logging.info("starting renderer %s", renderers_map[0][0])
-        renderer = renderers_map[0][1](asid)
+
+    def get_renderer(r):
+        logging.info("starting renderer %u (%s)", r, renderers_map[r][0])
+        renderer = renderers_map[r][1](asid)
         renderer.start()
-        for msg in ctrl_in_port:
-            if msg.type == "program_change":
-                if msg.program in renderers_map:
-                    renderer.stop()
-                    logging.info(
-                        "starting renderer %u (%s)",
-                        msg.program,
-                        renderers_map[msg.program][0],
-                    )
-                    renderer = renderers_map[msg.program][1](asid)
-                    renderer.start()
+        return renderer
+
+    with mido.open_input(ctrl_port) as ctrl_in_port:
+        renderer = get_renderer(options.default_renderer)
+        try:
+            for msg in ctrl_in_port:
+                if msg.type == "program_change":
+                    if msg.program in renderers_map:
+                        renderer.stop()
+                        renderer = get_renderer(msg.program)
+                    else:
+                        logging.error(
+                            "no renderer for program %u, not changing program",
+                            msg.program,
+                        )
+                elif hasattr(renderer, msg.type):
+                    start_time = time.time()
+                    func = getattr(renderer, msg.type)
+                    func(msg)
+                    logging.debug("%s: %.3fs", msg, time.time() - start_time)
                 else:
-                    logging.error(
-                        "no renderer for program %u, not changing program", msg.program
-                    )
-            elif hasattr(renderer, msg.type):
-                func = getattr(renderer, msg.type)
-                func(msg)
-            else:
-                logging.info("no handler for %s, no action", msg)
+                    logging.info("no handler for %s, no action", msg)
+        except KeyboardInterrupt:
+            renderer.stop()
 
 
 if __name__ == "__main__":

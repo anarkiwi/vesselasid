@@ -247,6 +247,7 @@ class Asid:
             code = b[x:y]
             self.addr(addr + x)
             self.load(code)
+        return difflist
 
     def _encode_code(self, code):
         data = []

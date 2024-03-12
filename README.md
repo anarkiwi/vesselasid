@@ -121,6 +121,28 @@ Stores ```count``` bytes from the location beginning at the VAP pointer to the a
 
 Retrieves ```count``` bytes to the location beginning at the VAP pointer from the address specified by ```reuaddr``` (a 24 bit address) in the REU.
 
+# MIDI rendering
+
+VesselASID provides a framework for running code in response to MIDI commands. The user provides a python module incontaining subclasses of
+```VesselAsidRenderer``` (an example is provided). Each class is provided a program number which can be selected with a program change message.
+Each class can be controlled with the usual MIDI messages (e.g. a note on message might cause an animation to advance).
+
+```
+$ asidrenderer --asid-port "Scarlett 4i4 USB:Scarlett 4i4 USB MIDI 1 20:0" --renderers vesselasid.examplerender
+2024-03-01 08:52:43,041 importing vesselasid.examplerender
+2024-03-01 08:52:43,042 found ExampleAsidRenderer
+2024-03-01 08:52:43,042 program 0 is ExampleAsidRenderer
+2024-03-01 08:52:43,042 using Scarlett 4i4 USB:Scarlett 4i4 USB MIDI 1 20:0 for ASID
+2024-03-01 08:52:43,042 using Midi Through:Midi Through Port-0 14:0 for control input
+2024-03-01 08:52:43,044 starting renderer ExampleAsidRenderer
+2024-03-01 08:52:49,049 note_off channel=0 note=90 velocity=0 time=0
+```
+
+### macosx
+
+```
+$ MIDO_BACKEND=mido.backends.portmidi asidrenderer --asid-port ...
+````
 
 
 

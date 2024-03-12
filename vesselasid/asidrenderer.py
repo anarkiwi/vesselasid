@@ -3,18 +3,34 @@ import importlib
 import inspect
 import logging
 import time
+import os
+import platform
 import mido
 from vesselasid.asid import Asid
 from vesselasid.baserender import VesselAsidRenderer
 
 
+def known_loopbacks(names):
+    loopbacks = set()
+    for name in names:
+        for loopback in ("IAC Driver", "Midi Through"):
+            if loopback in name:
+                loopbacks.add(name)
+                break
+    others = set(names) - loopbacks
+    return sorted(list(loopbacks), reverse=True), sorted(list(others), reverse=True)
+
+
 def main():
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(message)s")
+
+    if platform.system() == "Darwin" and os.getenv("MIDO_BACKEND", None) is None:
+        mido.set_backend("mido.backends.portmidi")
     if not mido.get_output_names():
         logging.fatal("no output ports available")
         raise ValueError
     if not mido.get_input_names():
-        logging.fatal("no input ports avaialable")
+        logging.fatal("no input ports available")
         raise ValueError
 
     parser = ArgumentParser()
@@ -82,9 +98,15 @@ def main():
     asid_port = options.asid_port
     if not asid_port:
         asid_port = mido.get_output_names()[0]
+        loopbacks, others = known_loopbacks(mido.get_output_names())
+        if others:
+            asid_port = others[0]
     ctrl_port = options.ctrl_port
     if not ctrl_port:
         ctrl_port = mido.get_input_names()[0]
+        loopbacks, others = known_loopbacks(mido.get_input_names())
+        if loopbacks:
+            ctrl_port = loopbacks[0]
     logging.info("using %s for ASID", asid_port)
     logging.info("using %s for control input", ctrl_port)
 
@@ -99,6 +121,7 @@ def main():
         logging.info("starting renderer %u (%s)", r, renderers_map[r][0])
         renderer = renderers_map[r][1](asid)
         renderer.start()
+        logging.info("renderer %u (%s) started", r, renderers_map[r][0])
         return renderer
 
     with mido.open_input(ctrl_port) as ctrl_in_port:

@@ -137,13 +137,3 @@ $ asidrenderer --asid-port "Scarlett 4i4 USB:Scarlett 4i4 USB MIDI 1 20:0" --ren
 2024-03-01 08:52:43,044 starting renderer ExampleAsidRenderer
 2024-03-01 08:52:49,049 note_off channel=0 note=90 velocity=0 time=0
 ```
-
-### macosx
-
-```
-$ MIDO_BACKEND=mido.backends.portmidi asidrenderer --asid-port ...
-````
-
-
-
-

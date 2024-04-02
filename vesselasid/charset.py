@@ -1,4 +1,5 @@
 import copy
+import scipy as sp
 import numpy as np
 
 
@@ -31,3 +32,26 @@ class Charset:
         )
         for y, x in enumerate(tochars):
             self.charset[x * 8 : x * 8 + 8] = chars_column[y * 8 : y * 8 + 8]
+
+    def rotate_square(self, fromchars, tochars, degrees):
+        sqrt = int(np.sqrt(len(fromchars)))
+        chars_square = np.reshape(
+            np.unpackbits(
+                np.concatenate([self.charset[x * 8 : x * 8 + 8] for x in fromchars])
+            ),
+            (len(fromchars) * 8, 8),
+        )
+        chars_square = np.concatenate(
+            [
+                chars_square[i * sqrt * 8 : (i * sqrt * 8) + (sqrt * 8), 0:8]
+                for i in range(sqrt)
+            ],
+            axis=1,
+        )
+        chars_square = sp.ndimage.rotate(chars_square, degrees, reshape=True)
+        for y in range(sqrt):
+            for x in range(sqrt):
+                c = tochars[y * sqrt + x]
+                self.charset[c * 8 : c * 8 + 8] = np.packbits(
+                    chars_square[x * 8 : x * 8 + 8, y * 8 : y * 8 + 8]
+                )

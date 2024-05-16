@@ -45,7 +45,7 @@ class RasterGuardVicIIRegister:
         self.asid.run()
 
 
-class VicIIDoubleBuffer2:
+class VicIIDoubleBuffer:
     def __init__(
         self,
         asid,

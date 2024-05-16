@@ -9,39 +9,43 @@ from vesselasid.constants import (
     SCREEN_SIZE,
     VICII_BASE,
     VICII_BRCOLOR,
+    VICII_CTRL1,
+    VICII_CTRL2,
     VICII_MEMPTRS,
-    VICII_VERTCONTROL,
 )
 
 
 class RasterGuardVicIIRegister:
-    def __init__(self, asid, vals, switcher_origin=DEFAULT_BUFFER):
+    def __init__(self, asid, combos, switcher_origin=DEFAULT_BUFFER):
         self.asid = asid
         self.valmap = {}
-        for reg, val in vals:
-            code = xa(
-                [
-                    "ldx #%u" % val,
-                    "lda #$80",
-                    "_w1: bit %u" % (VICII_BASE + VICII_VERTCONTROL),
-                    "bpl _w1",
-                    "_w2: bit %u" % (VICII_BASE + VICII_VERTCONTROL),
-                    "bmi _w2",
-                    "stx %u" % (VICII_BASE + reg),
-                ],
-                origin=switcher_origin,
-            )
+        for combo in combos:
+            asm_code = [
+                "lda #$80",
+                "_w1: bit %u" % (VICII_BASE + VICII_CTRL1),
+                "bpl _w1",
+                "_w2: bit %u" % (VICII_BASE + VICII_CTRL1),
+                "bmi _w2",
+            ]
+            for reg, val in combo:
+                asm_code.extend(
+                    [
+                        "ldx #%u" % val,
+                        "stx %u" % reg,
+                    ]
+                )
+            code = xa(asm_code, origin=switcher_origin)
             self.asid.addr(switcher_origin)
             self.asid.load(code)
-            self.valmap[(reg, val)] = switcher_origin
+            self.valmap[combo] = switcher_origin
             switcher_origin += len(code)
 
-    def spin(self, reg, val):
-        self.asid.addr(self.valmap[(reg, val)])
+    def spin(self, combo):
+        self.asid.addr(self.valmap[combo])
         self.asid.run()
 
 
-class VicIIDoubleBuffer:
+class VicIIDoubleBuffer2:
     def __init__(
         self,
         asid,
@@ -49,18 +53,41 @@ class VicIIDoubleBuffer:
         screen_buffer2=SCREEN_RAM2,
         charset_buffer1=CHARSET_ROM,
         charset_buffer2=CHARSET_ROM,
+        default_ctrl1=0x1B,
+        default_ctrl2=0xC8,
     ):
         self.asid = asid
         self.screen_buffers = (
             (screen_buffer2, charset_buffer2),
             (screen_buffer1, charset_buffer1),
         )
-        combos = [
-            (VICII_MEMPTRS, self.get_vic_ram_val(screen_buffer, charset_buffer))
-            for screen_buffer, charset_buffer in self.screen_buffers
-        ]
+        self.default_ctrl1 = default_ctrl1
+        self.default_ctrl2 = default_ctrl2
+        combos = []
+        for screen_buffer, charset_buffer in self.screen_buffers:
+            for x in (0, 7):
+                for y in (0, 7):
+                    combos.append(self.make_combo(screen_buffer, charset_buffer, x, y))
         self.guard = RasterGuardVicIIRegister(asid, combos)
         self.swap()
+
+    def make_combo(self, screen_buffer, charset_buffer, x, y):
+        return (
+            (
+                VICII_BASE + VICII_MEMPTRS,
+                self.get_vic_ram_val(screen_buffer, charset_buffer),
+            ),
+            (VICII_BASE + VICII_CTRL1, self.default_ctrl1 + y),
+            (VICII_BASE + VICII_CTRL2, self.default_ctrl2 + x),
+        )
+
+    def set_x(self, x):
+        self.asid.addr(VICII_BASE + VICII_CTRL2)
+        self.asid.load([self.default_ctrl2 + x])
+
+    def set_y(self, y):
+        self.asid.addr(VICII_BASE + VICII_CTRL1)
+        self.asid.load([self.default_ctrl1 + y])
 
     def vic_1k_addr(self, addr):
         return int((addr % (16 * 0x400)) / 0x400)
@@ -71,12 +98,10 @@ class VicIIDoubleBuffer:
     def buffers(self):
         return self.screen_buffers[1]
 
-    def swap(self):
-        self.screen_buffers = tuple(reversed(self.screen_buffers))
+    def swap(self, x=0, y=0):
         screen_buffer, charset_buffer = self.buffers()
-        self.guard.spin(
-            VICII_MEMPTRS, self.get_vic_ram_val(screen_buffer, charset_buffer)
-        )
+        self.guard.spin(self.make_combo(screen_buffer, charset_buffer, x, y))
+        self.screen_buffers = tuple(reversed(self.screen_buffers))
 
 
 class VesselAsidRenderer:

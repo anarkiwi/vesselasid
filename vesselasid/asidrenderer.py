@@ -116,6 +116,7 @@ def main():
         asid_in_port = mido.open_input(asid_port)
 
     asid = Asid(asid_out_port, in_port=asid_in_port)
+    asid.start()
 
     def get_renderer(r):
         logging.info("starting renderer %u (%s)", r, renderers_map[r][0])

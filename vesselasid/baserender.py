@@ -1,16 +1,21 @@
 from vesselasid.asm import xa
 from vesselasid.constants import (
+    CHARSET_ROM,
+    COLOR_RAM,
+    DEFAULT_BUFFER,
+    KERNEL_CINT,
     SCREEN_RAM,
     SCREEN_RAM2,
-    CHARSET_RAM,
+    SCREEN_SIZE,
     VICII_BASE,
+    VICII_BRCOLOR,
     VICII_MEMPTRS,
     VICII_VERTCONTROL,
 )
 
 
 class RasterGuardVicIIRegister:
-    def __init__(self, asid, vals, switcher_origin=0xC000):
+    def __init__(self, asid, vals, switcher_origin=DEFAULT_BUFFER):
         self.asid = asid
         self.valmap = {}
         for reg, val in vals:
@@ -42,8 +47,8 @@ class VicIIDoubleBuffer:
         asid,
         screen_buffer1=SCREEN_RAM,
         screen_buffer2=SCREEN_RAM2,
-        charset_buffer1=CHARSET_RAM,
-        charset_buffer2=CHARSET_RAM,
+        charset_buffer1=CHARSET_ROM,
+        charset_buffer2=CHARSET_ROM,
     ):
         self.asid = asid
         self.screen_buffers = (
@@ -79,7 +84,14 @@ class VesselAsidRenderer:
         self.asid = asid
 
     def start(self):
-        return
+        self.asid.addr(KERNEL_CINT)
+        self.asid.run()
+        self.asid.addr(VICII_BASE + VICII_BRCOLOR)
+        self.asid.load([0, 0])
+        self.asid.addr(COLOR_RAM)
+        self.asid.fillbuff(1, SCREEN_SIZE)
+        self.asid.addr(SCREEN_RAM)
+        self.asid.fillbuff(32, SCREEN_SIZE)
 
     def stop(self):
         return

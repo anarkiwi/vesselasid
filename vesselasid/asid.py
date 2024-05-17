@@ -78,12 +78,14 @@ def encodebits(val, bits, start=0):
     new_val = 0
     if start:
         mask = 2**start - 1
+    last_i = 0
     for i, bit in enumerate(bits, start=start):
         if bit is None:
             mask += 2**i
         elif bit:
             new_val += 2**i
-    leftover = 7 - (len(bits) - 1)
+        last_i = i
+    leftover = 7 - last_i
     if leftover:
         mask += (2**leftover - 1) << len(bits)
     return (val & mask) + new_val
@@ -219,6 +221,7 @@ class Asid:
     def loaddiffs(self, addr, a, b, shuffle=True, overhead=9):
         pos = None
         strictdifflist = []
+        last_i = 0
 
         for i, x_y in enumerate(zip(a, b)):
             x, y = x_y
@@ -229,9 +232,9 @@ class Asid:
             else:
                 if pos is None:
                     pos = i
-
+            last_i = i
         if pos is not None:
-            strictdifflist.append((pos, len(a)))
+            strictdifflist.append((pos, last_i + 1))
 
         difflist = strictdifflist[:1]
         for diff in strictdifflist[1:]:

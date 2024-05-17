@@ -25,11 +25,11 @@ def main():
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(message)s")
 
     if platform.system() == "Darwin" and os.getenv("MIDO_BACKEND", None) is None:
-        mido.set_backend("mido.backends.portmidi")
-    if not mido.get_output_names():
+        mido.set_backend("mido.backends.portmidi")  # type: ignore
+    if not mido.get_output_names():  # type: ignore
         logging.fatal("no output ports available")
         raise ValueError
-    if not mido.get_input_names():
+    if not mido.get_input_names():  # type: ignore
         logging.fatal("no input ports available")
         raise ValueError
 
@@ -40,7 +40,7 @@ def main():
         type=str,
         default=None,
         help="Set MIDI port for ASID control (available ports %s)"
-        % mido.get_output_names(),
+        % mido.get_output_names(),  # type: ignore
     )
     parser.add_argument(
         "--asid-input",
@@ -55,7 +55,7 @@ def main():
         type=str,
         default=None,
         help="Set MIDI port to receive renderer commands (available ports %s"
-        % mido.get_input_names(),
+        % mido.get_input_names(),  # type: ignore
     )
     parser.add_argument(
         "--renderers",
@@ -97,23 +97,23 @@ def main():
 
     asid_port = options.asid_port
     if not asid_port:
-        asid_port = mido.get_output_names()[0]
-        loopbacks, others = known_loopbacks(mido.get_output_names())
+        asid_port = mido.get_output_names()[0]  # type: ignore
+        loopbacks, others = known_loopbacks(mido.get_output_names())  # type: ignore
         if others:
             asid_port = others[0]
     ctrl_port = options.ctrl_port
     if not ctrl_port:
-        ctrl_port = mido.get_input_names()[0]
-        loopbacks, others = known_loopbacks(mido.get_input_names())
+        ctrl_port = mido.get_input_names()[0]  # type: ignore
+        loopbacks, others = known_loopbacks(mido.get_input_names())  # type: ignore
         if loopbacks:
             ctrl_port = loopbacks[0]
     logging.info("using %s for ASID", asid_port)
     logging.info("using %s for control input", ctrl_port)
 
-    asid_out_port = mido.open_output(asid_port)
+    asid_out_port = mido.open_output(asid_port)  # type: ignore
     asid_in_port = None
     if options.asid_input:
-        asid_in_port = mido.open_input(asid_port)
+        asid_in_port = mido.open_input(asid_port)  # type: ignore
 
     asid = Asid(asid_out_port, in_port=asid_in_port)
     asid.start()
@@ -125,7 +125,7 @@ def main():
         logging.info("renderer %u (%s) started", r, renderers_map[r][0])
         return renderer
 
-    with mido.open_input(ctrl_port) as ctrl_in_port:
+    with mido.open_input(ctrl_port) as ctrl_in_port:  # type: ignore
         renderer = get_renderer(options.default_renderer)
         try:
             for msg in ctrl_in_port:

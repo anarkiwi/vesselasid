@@ -83,7 +83,7 @@ def encodebits(val, bits, start=0):
             mask += 2**i
         elif bit:
             new_val += 2**i
-    leftover = 7 - i
+    leftover = 7 - (len(bits) - 1)
     if leftover:
         mask += (2**leftover - 1) << len(bits)
     return (val & mask) + new_val
@@ -231,7 +231,7 @@ class Asid:
                     pos = i
 
         if pos is not None:
-            strictdifflist.append((pos, i + 1))
+            strictdifflist.append((pos, len(a)))
 
         difflist = strictdifflist[:1]
         for diff in strictdifflist[1:]:
@@ -287,10 +287,10 @@ class Asid:
         return self._encode_code(lohi(copyfrom, 16, 8) + lohi(count, 16, 8))
 
     def copybuff(self, copyfrom, count):
-        self._sysex([ASID_COPY_BUFFER] + self.encodecopy(copyfrom, count))
+        self._sysex([ASID_COPY_BUFFER] + self._encodecopy(copyfrom, count))
 
     def copyrect(self, copyfrom, count):
-        self._sysex([ASID_COPY_RECT_BUFFER] + self.encodecopy(copyfrom, count))
+        self._sysex([ASID_COPY_RECT_BUFFER] + self._encodecopy(copyfrom, count))
 
     def _encodereu(self, reuaddr, count):
         return self._encode_code(
@@ -316,6 +316,8 @@ class Asid:
         self._resetreg()
 
     def update(self, changes=None):
+        if self.regs is None:
+            raise ValueError("not initialized")
         if changes is None:
             changes = self.sid.state()
         masks = [0, 0, 0, 0]

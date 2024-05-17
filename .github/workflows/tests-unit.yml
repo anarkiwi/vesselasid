@@ -19,10 +19,10 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update && sudo apt-get -y install xa65 && \
-            sudo pip install -r test-requirements.txt -r requirements.txt
+            pip install --user -r test-requirements.txt -r requirements.txt
           # https://github.com/actions/runner-images/issues/8295
           # sudo modprobe snd-dummy
-          sudo pip3 install .
+          pip3 install --user .
       - name: Run unit tests
         run: |
           pytest tests

@@ -58,6 +58,7 @@ ASID_COPY_RECT_BUFFER = 0x5A
 ASID_STASH_REU_BUFFER = 0x5B
 ASID_FETCH_REU_BUFFER = 0x5C
 ASID_FILL_REU_BUFFER = 0x5D
+ASID_STASH_RECT_REU_BUFFER = 0x5E
 
 VOICE_REGS = 7
 
@@ -303,6 +304,9 @@ class Asid:
 
     def stashbuff(self, reuaddr, count):
         self._sysex([ASID_STASH_REU_BUFFER] + self._encodereu(reuaddr, count))
+
+    def stashbuffrect(self, reuaddr, count):
+        self._sysex([ASID_STASH_RECT_REU_BUFFER] + self._encodereu(reuaddr, count))
 
     def fetchbuff(self, reuaddr, count):
         self._sysex([ASID_FETCH_REU_BUFFER] + self._encodereu(reuaddr, count))

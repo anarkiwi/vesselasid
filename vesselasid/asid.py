@@ -306,7 +306,7 @@ class Asid:
         self._sysex([ASID_STASH_REU_BUFFER] + self._encodereu(reuaddr, count))
 
     def stashbuffrect(self, reuaddr, count):
-        self._sysex([ASID_STASH_RECT_REU_BUFFER], self._encodereu(reuaddr, count))
+        self._sysex([ASID_STASH_RECT_REU_BUFFER] + self._encodereu(reuaddr, count))
 
     def fetchbuff(self, reuaddr, count):
         self._sysex([ASID_FETCH_REU_BUFFER] + self._encodereu(reuaddr, count))

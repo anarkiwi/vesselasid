@@ -1,4 +1,5 @@
 import threading
+import time
 from vesselasid.asm import xa
 from vesselasid.constants import (
     CHARSET_ROM,

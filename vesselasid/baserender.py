@@ -113,7 +113,7 @@ class VesselAsidRenderer:
     def __init__(self, asid):
         self.asid = asid
         self.running = False
-        self.thread = None
+        self.thread = threading.Thread(target=self.run)
 
     def start(self):
         self.asid.addr(KERNEL_CINT)
@@ -124,11 +124,13 @@ class VesselAsidRenderer:
         self.asid.fillbuff(1, SCREEN_SIZE)
         self.asid.addr(SCREEN_RAM)
         self.asid.fillbuff(32, SCREEN_SIZE)
-        if hasattr(self, run):
-            self.thread = threading.Thread(target=self.run)
+
+    def run(self):
+        while self.running:
+            time.sleep(1)
 
     def stop(self):
-        if hasattr(self, run) and self.thread is not None:
+        if self.thread.is_alive():
             self.running = False
             self.thread.join()
 

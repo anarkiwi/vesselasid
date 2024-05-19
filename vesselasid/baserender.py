@@ -1,3 +1,5 @@
+import threading
+import time
 from vesselasid.asm import xa
 from vesselasid.constants import (
     CHARSET_ROM,
@@ -55,6 +57,7 @@ class VicIIDoubleBuffer:
         charset_buffer2=CHARSET_ROM,
         default_ctrl1=0x1B,
         default_ctrl2=0xC8,
+        switcher_origin=DEFAULT_BUFFER,
     ):
         self.asid = asid
         self.screen_buffers = (
@@ -68,7 +71,9 @@ class VicIIDoubleBuffer:
             for x in (0, 7):
                 for y in (0, 7):
                     combos.append(self.make_combo(screen_buffer, charset_buffer, x, y))
-        self.guard = RasterGuardVicIIRegister(asid, combos)
+        self.guard = RasterGuardVicIIRegister(
+            asid, combos, switcher_origin=switcher_origin
+        )
         self.swap()
 
     def make_combo(self, screen_buffer, charset_buffer, x, y):
@@ -98,6 +103,9 @@ class VicIIDoubleBuffer:
     def buffers(self):
         return self.screen_buffers[1]
 
+    def live_buffers(self):
+        return self.screen_buffers[0]
+
     def swap(self, x=0, y=0):
         screen_buffer, charset_buffer = self.buffers()
         self.guard.spin(self.make_combo(screen_buffer, charset_buffer, x, y))
@@ -107,6 +115,8 @@ class VicIIDoubleBuffer:
 class VesselAsidRenderer:
     def __init__(self, asid):
         self.asid = asid
+        self.running = False
+        self.thread = threading.Thread(target=self.run)
 
     def start(self):
         self.asid.addr(KERNEL_CINT)
@@ -118,8 +128,14 @@ class VesselAsidRenderer:
         self.asid.addr(SCREEN_RAM)
         self.asid.fillbuff(32, SCREEN_SIZE)
 
+    def run(self):
+        while self.running:
+            time.sleep(1)
+
     def stop(self):
-        return
+        if self.thread.is_alive():
+            self.running = False
+            self.thread.join()
 
     def note_on(self, msg):
         return

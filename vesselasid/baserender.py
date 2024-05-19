@@ -1,3 +1,4 @@
+import threading
 from vesselasid.asm import xa
 from vesselasid.constants import (
     CHARSET_ROM,
@@ -55,6 +56,7 @@ class VicIIDoubleBuffer:
         charset_buffer2=CHARSET_ROM,
         default_ctrl1=0x1B,
         default_ctrl2=0xC8,
+        switcher_origin=DEFAULT_BUFFER,
     ):
         self.asid = asid
         self.screen_buffers = (
@@ -98,6 +100,9 @@ class VicIIDoubleBuffer:
     def buffers(self):
         return self.screen_buffers[1]
 
+    def live_buffers(self):
+        return self.screen_buffers[0]
+
     def swap(self, x=0, y=0):
         screen_buffer, charset_buffer = self.buffers()
         self.guard.spin(self.make_combo(screen_buffer, charset_buffer, x, y))
@@ -107,6 +112,8 @@ class VicIIDoubleBuffer:
 class VesselAsidRenderer:
     def __init__(self, asid):
         self.asid = asid
+        self.running = False
+        self.thread = None
 
     def start(self):
         self.asid.addr(KERNEL_CINT)
@@ -117,9 +124,13 @@ class VesselAsidRenderer:
         self.asid.fillbuff(1, SCREEN_SIZE)
         self.asid.addr(SCREEN_RAM)
         self.asid.fillbuff(32, SCREEN_SIZE)
+        if hasattr(self, run):
+            self.thread = threading.Thread(target=self.run)
 
     def stop(self):
-        return
+        if hasattr(self, run) and self.thread is not None:
+            self.running = False
+            self.thread.join()
 
     def note_on(self, msg):
         return

@@ -70,7 +70,9 @@ class VicIIDoubleBuffer:
             for x in (0, 7):
                 for y in (0, 7):
                     combos.append(self.make_combo(screen_buffer, charset_buffer, x, y))
-        self.guard = RasterGuardVicIIRegister(asid, combos)
+        self.guard = RasterGuardVicIIRegister(
+            asid, combos, switcher_origin=switcher_origin
+        )
         self.swap()
 
     def make_combo(self, screen_buffer, charset_buffer, x, y):
